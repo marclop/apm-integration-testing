@@ -9,6 +9,12 @@ from .service import Service, DEFAULT_APM_SERVER_URL, DEFAULT_APM_JS_SERVER_URL,
 
 
 class OpbeansService(Service):
+<<<<<<< HEAD
+=======
+    APPLICATION_PORT = 3000
+    DEFAULT_SAMPLE_RATE = 10
+
+>>>>>>> 82a3dd3 (Sampling rate overhaul (#1255))
     def __init__(self, **options):
         super(OpbeansService, self).__init__(**options)
         self.apm_server_url = options.get("apm_server_url", DEFAULT_APM_SERVER_URL)
@@ -22,7 +28,13 @@ class OpbeansService(Service):
         self.agent_local_repo = options.get(self.option_name() + "_agent_local_repo")
         self.opbeans_branch = options.get(self.option_name() + "_branch") or ""
         self.opbeans_repo = options.get(self.option_name() + "_repo") or ""
+<<<<<<< HEAD
         self.es_urls = ",".join(self.options.get("opbeans_elasticsearch_urls") or [self.DEFAULT_ELASTICSEARCH_HOSTS])
+=======
+        self.sample_rate = float(int(options.get(self.option_name() + "_sample_rate") or 1) / 10)
+        self.es_urls = ",".join(self.options.get("opbeans_elasticsearch_urls") or
+                                [self.DEFAULT_ELASTICSEARCH_HOSTS_NO_TLS])
+>>>>>>> 82a3dd3 (Sampling rate overhaul (#1255))
         self.service_environment = \
             options.get(self.option_name() + "_service_environment") or self.DEFAULT_ELASTIC_APM_ENVIRONMENT
 
@@ -61,6 +73,13 @@ class OpbeansService(Service):
             dest=cls.option_name() + '_service_version',
             help=cls.name() + " service version"
         )
+        parser.add_argument(
+            '--' + cls.name() + '-sample-rate',
+            default=cls.DEFAULT_SAMPLE_RATE,
+            dest=cls.option_name() + '_sample_rate',
+            help=cls.name() + " sample rate percentage",
+            choices=range(1, 101)
+        )
         if hasattr(cls, 'DEFAULT_SERVICE_NAME'):
             parser.add_argument(
                 '--' + cls.name() + '-service-name',
@@ -79,6 +98,7 @@ class OpbeansDotnet(OpbeansService):
     DEFAULT_OPBEANS_BRANCH = "master"
     DEFAULT_OPBEANS_REPO = "elastic/opbeans-dotnet"
     DEFAULT_ELASTIC_APM_ENVIRONMENT = "production"
+    DEFAULT_SAMPLE_RATE = 10
 
     @classmethod
     def add_arguments(cls, parser):
@@ -134,10 +154,10 @@ class OpbeansDotnet(OpbeansService):
                 "ELASTIC_APM_VERIFY_SERVER_CERT={}".format(str(not self.options.get("no_verify_server_cert")).lower()),
                 "ELASTIC_APM_FLUSH_INTERVAL=5",
                 "ELASTIC_APM_TRANSACTION_MAX_SPANS=50",
-                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE=1",
                 "ELASTICSEARCH_URL={}".format(self.es_urls),
                 "OPBEANS_DT_PROBABILITY={:.2f}".format(self.opbeans_dt_probability),
                 "ELASTIC_APM_ENVIRONMENT={}".format(self.service_environment),
+                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE={:.2f}".format(self.sample_rate),
             ],
             depends_on=depends_on,
             image=None,
@@ -164,6 +184,7 @@ class OpbeansGo(OpbeansService):
     DEFAULT_OPBEANS_REPO = "elastic/opbeans-go"
     DEFAULT_SERVICE_NAME = "opbeans-go"
     DEFAULT_ELASTIC_APM_ENVIRONMENT = "production"
+    DEFAULT_SAMPLE_RATE = 10
 
     @classmethod
     def add_arguments(cls, parser):
@@ -214,7 +235,6 @@ class OpbeansGo(OpbeansService):
                 "ELASTIC_APM_VERIFY_SERVER_CERT={}".format(str(not self.options.get("no_verify_server_cert")).lower()),
                 "ELASTIC_APM_FLUSH_INTERVAL=5",
                 "ELASTIC_APM_TRANSACTION_MAX_SPANS=50",
-                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE=1",
                 "ELASTICSEARCH_URL={}".format(self.es_urls),
                 "OPBEANS_CACHE=redis://redis:6379",
                 "OPBEANS_PORT=3000",
@@ -225,6 +245,7 @@ class OpbeansGo(OpbeansService):
                 "PGSSLMODE=disable",
                 "OPBEANS_DT_PROBABILITY={:.2f}".format(self.opbeans_dt_probability),
                 "ELASTIC_APM_ENVIRONMENT={}".format(self.service_environment),
+                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE={:.2f}".format(self.sample_rate),
             ],
             depends_on=depends_on,
             image=None,
@@ -251,6 +272,7 @@ class OpbeansJava(OpbeansService):
     DEFAULT_OPBEANS_IMAGE = 'opbeans/opbeans-java'
     DEFAULT_OPBEANS_VERSION = 'latest'
     DEFAULT_ELASTIC_APM_ENVIRONMENT = "production"
+    DEFAULT_SAMPLE_RATE = 10
 
     @classmethod
     def add_arguments(cls, parser):
@@ -310,7 +332,6 @@ class OpbeansJava(OpbeansService):
                 "ELASTIC_APM_VERIFY_SERVER_CERT={}".format(str(not self.options.get("no_verify_server_cert")).lower()),
                 "ELASTIC_APM_FLUSH_INTERVAL=5",
                 "ELASTIC_APM_TRANSACTION_MAX_SPANS=50",
-                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE=1",
                 "ELASTIC_APM_ENABLE_LOG_CORRELATION=true",
                 "DATABASE_URL=jdbc:postgresql://postgres/opbeans?user=postgres&password=verysecure",
                 "DATABASE_DIALECT=POSTGRESQL",
@@ -321,6 +342,7 @@ class OpbeansJava(OpbeansService):
                 "JAVA_AGENT_VERSION",
                 "OPBEANS_DT_PROBABILITY={:.2f}".format(self.opbeans_dt_probability),
                 "ELASTIC_APM_ENVIRONMENT={}".format(self.service_environment),
+                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE={:.2f}".format(self.sample_rate),
             ],
             depends_on=depends_on,
             image=None,
@@ -351,6 +373,7 @@ class OpbeansNode(OpbeansService):
     DEFAULT_OPBEANS_IMAGE = 'opbeans/opbeans-node'
     DEFAULT_OPBEANS_VERSION = 'latest'
     DEFAULT_ELASTIC_APM_ENVIRONMENT = "production"
+    DEFAULT_SAMPLE_RATE = 10
 
     @classmethod
     def add_arguments(cls, parser):
@@ -417,6 +440,7 @@ class OpbeansNode(OpbeansService):
                 "NODE_AGENT_REPO=" + self.agent_repo,
                 "OPBEANS_DT_PROBABILITY={:.2f}".format(self.opbeans_dt_probability),
                 "ELASTIC_APM_ENVIRONMENT={}".format(self.service_environment),
+                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE={:.2f}".format(self.sample_rate),
             ],
             depends_on=depends_on,
             image=None,
@@ -451,6 +475,7 @@ class OpbeansPython(OpbeansService):
     DEFAULT_OPBEANS_IMAGE = 'opbeans/opbeans-python'
     DEFAULT_OPBEANS_VERSION = 'latest'
     DEFAULT_ELASTIC_APM_ENVIRONMENT = "production"
+    DEFAULT_SAMPLE_RATE = 10
 
     @classmethod
     def add_arguments(cls, parser):
@@ -507,7 +532,6 @@ class OpbeansPython(OpbeansService):
                 "ELASTIC_APM_VERIFY_SERVER_CERT={}".format(str(not self.options.get("no_verify_server_cert")).lower()),
                 "ELASTIC_APM_FLUSH_INTERVAL=5",
                 "ELASTIC_APM_TRANSACTION_MAX_SPANS=50",
-                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE=0.5",
                 "ELASTIC_APM_SOURCE_LINES_ERROR_APP_FRAMES",
                 "ELASTIC_APM_SOURCE_LINES_SPAN_APP_FRAMES=5",
                 "ELASTIC_APM_SOURCE_LINES_ERROR_LIBRARY_FRAMES",
@@ -522,6 +546,7 @@ class OpbeansPython(OpbeansService):
                 "PYTHON_AGENT_VERSION",
                 "OPBEANS_DT_PROBABILITY={:.2f}".format(self.opbeans_dt_probability),
                 "ELASTIC_APM_ENVIRONMENT={}".format(self.service_environment),
+                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE={:.2f}".format(self.sample_rate),
             ],
             depends_on=depends_on,
             image=None,
@@ -553,6 +578,7 @@ class OpbeansRuby(OpbeansService):
     DEFAULT_OPBEANS_IMAGE = 'opbeans/opbeans-ruby'
     DEFAULT_OPBEANS_VERSION = 'latest'
     DEFAULT_ELASTIC_APM_ENVIRONMENT = "production"
+    DEFAULT_SAMPLE_RATE = 10
 
     @classmethod
     def add_arguments(cls, parser):
@@ -613,6 +639,7 @@ class OpbeansRuby(OpbeansService):
                 "RUBY_AGENT_VERSION",
                 "OPBEANS_DT_PROBABILITY={:.2f}".format(self.opbeans_dt_probability),
                 "ELASTIC_APM_ENVIRONMENT={}".format(self.service_environment),
+                "ELASTIC_APM_TRANSACTION_SAMPLE_RATE={:.2f}".format(self.sample_rate),
             ],
             depends_on=depends_on,
             image=None,
